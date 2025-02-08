@@ -1,26 +1,42 @@
-ProjectName := basic-sfml-project
-ExecName := exec
+PROJECT_NAME := project
+EXEC_NAME := exec
+CMAKE_EXIT_NAME := exit
 
-.PHONY: all clean validate debug release
+BUILD_TYPE := Debug # Release
 
-all: debug
+BUILD_FOLDER := build
+DEST_FOLDER := dest
+DATA_FOLDER := data
 
-debug: validate
-	cmake -D CMAKE_BUILD_TYPE=Debug -B build -S .
+PROJECT_FOLDER := $(DEST_FOLDER)/$(PROJECT_NAME)
+EXEC := $(PROJECT_FOLDER)/$(EXEC_NAME)
+CMAKE_EXIT := $(BUILD_FOLDER)/$(CMAKE_EXIT_NAME)
+
+.PHONY: all clean cmake zip
+
+all: $(EXEC)
+
+zip: $(EXEC)
+	cd $(DEST_FOLDER) && zip -r $(PROJECT_NAME).zip $(PROJECT_NAME)
+
+$(EXEC): $(CMAKE_EXIT) $(PROJECT_FOLDER)/
+	cp $(CMAKE_EXIT) $(EXEC)
+	test -d $(DATA_FOLDER) && cp -R $(DATA_FOLDER) $(PROJECT_FOLDER)
+
+$(CMAKE_EXIT): cmake
 	cd build && make
-	cp build/exec dest/$(ProjectName)/$(ExecName)-debug
-	cp -R data dest/$(ProjectName)
 
-release: validate
-	cmake -D CMAKE_BUILD_TYPE=Release -B build -S .
-	cd build && make
-	cp build/exec dest/$(ProjectName)/$(ExecName)
-	cp -R data dest/$(ProjectName)
-	zip -r dest/$(ProjectName).zip dest/$(ProjectName)
+cmake: $(BUILD_FOLDER)/
+	cmake -D CMAKE_BUILD_TYPE=$(BUILD_TYPE) -B $(BUILD_FOLDER) -S .
 
-validate:
-	rm -rf dest/$(ProjectName) dest/$(ProjectName).zip
-	mkdir -p build dest/$(ProjectName)
+$(BUILD_FOLDER)/:
+	mkdir -p $(BUILD_FOLDER)
+
+$(PROJECT_FOLDER)/: $(DEST_FOLDER)/
+	mkdir -p $(PROJECT_FOLDER)
+
+$(DEST_FOLDER)/:
+	mkdir -p $(DEST_FOLDER)
 
 clean:
-	rm -rf build dest
+	rm -rf $(BUILD_FOLDER) $(DEST_FOLDER)
